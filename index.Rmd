@@ -1,0 +1,149 @@
+---
+title: "Texas GIS Data By Counties"
+---
+
+```{r setup, include=FALSE}
+options(repos = list("CRAN=http://cran.rstudio.com/"))
+install.packages("tidyverse")
+install.packages("rvest")
+install.packages("XML")
+
+library(tidyverse)
+library(rvest)
+library(XML)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+_This dataset was created to be used in my Capstone Project for the Google Data Analytics Professional Certificate_
+
+Data was web scraped from the state websites to combine the GIS information like FIPS, latitude, longitude, and County Codes by both number and Mailing Number.
+
+### GIS Data with FIPS, Lat and Long
+
+[Texas Counties Centroid Map](https://data.texas.gov/widgets/ups3-9e8m?mobile_redirect=true)
+
+### County Codes referring to Mailing Addresses
+
+[Texas Workforce Commission Tax County Codes](https://www.twc.texas.gov/tax-county-codes#countyCodesForEmployersQuarterlyReport)
+
+
+The tidyverse, rvest, and XML packages were used.
+
+
+### Beginning the Web Scrape Process
+
+Convert URL to HTML
+```{r}
+page <- read_html("https://www.twc.texas.gov/tax-county-codes#countyCodesForEmployersQuarterlyReport")
+```
+
+Creating the tables as a variable in R
+```{r}
+tables <- page %>% html_table(fill=TRUE)
+```
+
+Preview the data to confirm it was extracted from the website.
+```{r}
+glimpse(tables)
+```
+
+Since the data was separated into 4 tables alphabetically I then separated the tables into their own variables to aggregate them into one data frame.
+```{r}
+countiesAF <- tables[[1]]
+countiesGL <- tables[[2]]
+countiesMR <- tables[[3]]
+countiesSZ <- tables[[4]]
+```
+
+Now we could merge the data to create one data frame
+```{r}
+countymailingcodes <- rbind(countiesAF, countiesGL, countiesMR, countiesSZ)
+```
+
+To confirm that it was put into one data frame we can do a glimpse function to preview the number of rows.
+```{r}
+glimpse(countymailingcodes)
+```
+
+### End Web scrape Process
+
+The following website had the option to simply download a .csv file of displayed data. 
+
+[Texas Counties Centroid Map](https://data.texas.gov/widgets/ups3-9e8m?mobile_redirect=true)
+
+Then we could import the CSV using the read function and set as variable countyGISdata.
+```{r}
+countyGISdata <- read.csv("Texas_Counties_Centroid_Map.csv")
+```
+
+### Joining The Data
+
+A full Join can be performed for the two tables based on County Name since we want all the data in each table to be present. 
+```{r}
+TexasCountyGISData <- full_join(countymailingcodes, countyGISdata, by=c("County" = "CNTY_NM"))
+```
+
+Now export TexasCountyGISData to excel file as .csv  
+```{r}
+write.table(TexasCountyGISData, file="Texas_County_GIS_Data.csv", row.names=F, sep=",")
+```
+
+After viewing the joined table in excel, their were formatting issues with the following county names which resulted in "NA" values after the join above. 
+
+Austin County       -   Austin    |
+DeWitt              -   De Witt   |
+Houston County      -   Houston   |
+Tyler County        -   Tyler     |
+
+*To keep the formatting the same I edited in excel to exclude "County" in the names and left Dewitt as one word.* 
+
+Imported the .csv back to view in Rstudio
+```{r}
+UpdatedTexasCountyGISData <- read.csv("Texas_Counties_GIS_Data_Updated.csv")
+```
+
+View a Tibble of the updated and joined dataset. 
+```{r}
+head(UpdatedTexasCountyGISData)
+```
+
+I want to rearrange the columns and rename them for uniformity in the final exported version.  
+```{r}
+colnames(UpdatedTexasCountyGISData)
+```
+
+Now we can create the final table, rearrange the columns, rename the columns for uniformity in one code chunk.  
+```{r}
+TexasCountyGISDataFinal <- UpdatedTexasCountyGISData %>%
+  
+  select(County, Tax.Code, CNTY_NBR, FIPS, X..Lat., Y..Long., County.Centroid.Location, Shape_Leng, Shape_Area) %>%
+  
+  rename(Code_Mailing=Tax.Code, Code_Number=CNTY_NBR, X_Latitude=X..Lat., Y_Longitude=Y..Long., Centroid_Location=County.Centroid.Location)
+```
+
+```{r}
+TexasCountyGISDataFinal
+```
+Now we export to final .CSV file
+```{r}
+write.table(TexasCountyGISDataFinal, file="Texas_Counties_GIS_Data_Final.csv", row.names=F, sep=",")
+```
+
+### Final Notes
+
+I could have just edited the names and rearranged them in excel but I thought it would be more fun to come back into Rstudio and play around with some of the functions to learn a bit more. 
+
+I converted the .csv file to a google spreadsheet to make it accessible via the link below for those that are interested in making a copy into their own drive. 
+
+### Google Drive
+[Texas Counties GIS Data](https://docs.google.com/spreadsheets/d/14tZoSZokVC5MiGU60GWdX7WksUEG2_XwlfRmhH_cgo8/edit?usp=sharing)
+
+I also posted it on kaggle.com and made it public. 
+
+### Kaggle
+[Texas GIS Data By County](https://www.kaggle.com/datasets/itsmundo/texas-gis-data-by-county/settings)
+
+*Feel free to follow my [Github](https://github.com/ItsMundo) or [LinkedIn Profile](https://www.linkedin.com/in/itsmundo/) to see what I end up doing with this Dataset.*
