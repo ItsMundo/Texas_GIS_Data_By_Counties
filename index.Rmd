@@ -1,5 +1,6 @@
 ---
 title: "Texas GIS Data By Counties"
+author: "Raymundo Flores Jr"
 ---
 
 ```{r setup, include=FALSE}
@@ -13,29 +14,34 @@ library(rvest)
 library(XML)
 ```
 
-## R Markdown
+##### R Markdown
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-_This dataset was created to be used in my Capstone Project for the Google Data Analytics Professional Certificate_
-
+### Introduction
 Data was web scraped from the state websites to combine the GIS information like FIPS, latitude, longitude, and County Codes by both number and Mailing Number.
 
-### GIS Data with FIPS, Lat and Long
+### Why?
+The final data set in this project was created to be used in my Capstone Project for the Google Data Analytics Professional Certificate. The _main_ dataset that I will be basing the analysis off of in the capstone project only had the county names and county codes by mailing addresses associated with the dataset. So in order to answer some of the questions in regards to the relationship of the data and their respective geographical locations I needed to retrieve some GIS data based on county BUT also needed to Join them together to then later join with the _main_ dataset in the Case Study.  
+
+## Data Sources
+
+__GIS Data with FIPS, Lat and Long__
 
 [Texas Counties Centroid Map](https://data.texas.gov/widgets/ups3-9e8m?mobile_redirect=true)
 
-### County Codes referring to Mailing Addresses
+__County Codes referring to Mailing Addresses__
 
 [Texas Workforce Commission Tax County Codes](https://www.twc.texas.gov/tax-county-codes#countyCodesForEmployersQuarterlyReport)
 
-
-The tidyverse, rvest, and XML packages were used.
-
+### Packages Used
+* Tidyverse
+* rvest
+* XML
 
 ### Beginning the Web Scrape Process
 
-Convert URL to HTML
+Converting URL to HTML
 ```{r}
 page <- read_html("https://www.twc.texas.gov/tax-county-codes#countyCodesForEmployersQuarterlyReport")
 ```
@@ -45,12 +51,12 @@ Creating the tables as a variable in R
 tables <- page %>% html_table(fill=TRUE)
 ```
 
-Preview the data to confirm it was extracted from the website.
+Preview the data to confirm extraction
 ```{r}
 glimpse(tables)
 ```
 
-Since the data was separated into 4 tables alphabetically I then separated the tables into their own variables to aggregate them into one data frame.
+Since the data was separated into 4 tables alphabetically, the following chunk separates the tables into their own variables to later aggregate them into one.
 ```{r}
 countiesAF <- tables[[1]]
 countiesGL <- tables[[2]]
@@ -58,7 +64,7 @@ countiesMR <- tables[[3]]
 countiesSZ <- tables[[4]]
 ```
 
-Now we could merge the data to create one data frame
+Now we could merge the data to create one data frame using the bind function.
 ```{r}
 countymailingcodes <- rbind(countiesAF, countiesGL, countiesMR, countiesSZ)
 ```
@@ -86,28 +92,33 @@ A full Join can be performed for the two tables based on County Name since we wa
 TexasCountyGISData <- full_join(countymailingcodes, countyGISdata, by=c("County" = "CNTY_NM"))
 ```
 
-Now export TexasCountyGISData to excel file as .csv  
+Preview the Joined dataframe. 
+```{r}
+glimpse(TexasCountyGISData)
+```
+
+Since there are only 254 Counties in Texas I exported TexasCountyGISData to excel file as .csv for some exploratory analysis. 
 ```{r}
 write.table(TexasCountyGISData, file="Texas_County_GIS_Data.csv", row.names=F, sep=",")
 ```
 
 After viewing the joined table in excel, their were formatting issues with the following county names which resulted in "NA" values after the join above. 
 
-Austin County       -   Austin    |
-DeWitt              -   De Witt   |
-Houston County      -   Houston   |
-Tyler County        -   Tyler     |
+**To keep the formatting the same I edited in excel to exclude "County" in the names and left Dewitt as one word, then saved it as Texas_Counties_GIS_Data_Updated.**
 
-*To keep the formatting the same I edited in excel to exclude "County" in the names and left Dewitt as one word.* 
+##### Austin County       ->   Austin    
+##### DeWitt              ->   De Witt   
+##### Houston County      ->   Houston   
+##### Tyler County        ->   Tyler     
 
 Imported the .csv back to view in Rstudio
 ```{r}
 UpdatedTexasCountyGISData <- read.csv("Texas_Counties_GIS_Data_Updated.csv")
 ```
 
-View a Tibble of the updated and joined dataset. 
+View the updated and joined dataset info 
 ```{r}
-head(UpdatedTexasCountyGISData)
+glimpse(UpdatedTexasCountyGISData)
 ```
 
 I want to rearrange the columns and rename them for uniformity in the final exported version.  
@@ -115,24 +126,26 @@ I want to rearrange the columns and rename them for uniformity in the final expo
 colnames(UpdatedTexasCountyGISData)
 ```
 
-Now we can create the final table, rearrange the columns, rename the columns for uniformity in one code chunk.  
+Creating the final table, rearranging and rename the columns for uniformity in one code chunk using the pipe function.  
 ```{r}
 TexasCountyGISDataFinal <- UpdatedTexasCountyGISData %>%
   
   select(County, Tax.Code, CNTY_NBR, FIPS, X..Lat., Y..Long., County.Centroid.Location, Shape_Leng, Shape_Area) %>%
   
-  rename(Code_Mailing=Tax.Code, Code_Number=CNTY_NBR, X_Latitude=X..Lat., Y_Longitude=Y..Long., Centroid_Location=County.Centroid.Location)
+  rename(Code_Mailing=Tax.Code, Code_Number=CNTY_NBR, X_Latitude=X..Lat., Y_Longitude=Y..Long., Centroid_Location=County.Centroid.Location, Shape_Length=Shape_Leng)
 ```
 
 ```{r}
-TexasCountyGISDataFinal
+glimpse(TexasCountyGISDataFinal)
 ```
 Now we export to final .CSV file
 ```{r}
 write.table(TexasCountyGISDataFinal, file="Texas_Counties_GIS_Data_Final.csv", row.names=F, sep=",")
 ```
 
-### Final Notes
+## Conclusion
+
+I now have the final version of the dataset combined from both websites and ready for use in my Case Study. 
 
 I could have just edited the names and rearranged them in excel but I thought it would be more fun to come back into Rstudio and play around with some of the functions to learn a bit more. 
 

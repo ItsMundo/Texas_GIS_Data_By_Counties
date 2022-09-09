@@ -1,4 +1,4 @@
-"County","Code_Mailing","Code_Number","FIPS","X_Latitude","Y_Longitude","Centroid_Location","Shape_Leng","Shape_Area"
+"County","Code_Mailing","Code_Number","FIPS","X_Latitude","Y_Longitude","Centroid_Location","Shape_Length","Shape_Area"
 "Anderson",1,1,"48,001",31.81321543,-95.65251774,"POINT (-95.65251774 31.81321543)",3.70938097,0.265991956
 "Andrews",3,2,"48,003",32.30506283,-102.6378839,"POINT (-102.6378839 32.30506283)",2.579602167,0.372269477
 "Angelina",5,3,"48,005",31.25475875,-94.611742,"POINT (-94.611742 31.25475875)",3.432799188,0.212056914

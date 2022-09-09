@@ -1,10 +1,10 @@
 name: "my-website"
 navbar:
-  title: "My Website"
+  title: "A Simple Webscrape Using R"
   left:
-    - text: "Home"
+    - text: "Project Details"
       href: index.html
 output:
   html_document:
-    theme: cosmo
+    theme: spacelab
     highlight: textmate
